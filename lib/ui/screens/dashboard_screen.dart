@@ -77,7 +77,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     userName: 'Trio Dwi Pratama',
                   ),
 
-                  // Horizontal Date Selector
+                  SizedBox(height: 6),
                   DashboardDateSelector(
                     selectedDate: selectedDate,
                     onDateChanged: (date) {
