@@ -17,7 +17,7 @@ class _AppShellState extends State<AppShell> {
   void _onItemTapped(int index, BuildContext context) {
     if (_currentIndex == index) return;
     setState(() => _currentIndex = index);
-    
+
     switch (index) {
       case 0:
         context.go('/dashboard');
@@ -35,155 +35,237 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     // Determine current index based on route
     final String location = GoRouterState.of(context).uri.toString();
-    if (location.startsWith('/dashboard')) { _currentIndex = 0; }
-    else if (location.startsWith('/schedule')) { _currentIndex = 1; }
-    else if (location.startsWith('/profile')) { _currentIndex = 2; }
+    if (location.startsWith('/dashboard')) {
+      _currentIndex = 0;
+    } else if (location.startsWith('/schedule')) {
+      _currentIndex = 1;
+    } else if (location.startsWith('/profile')) {
+      _currentIndex = 2;
+    }
 
     return Scaffold(
       extendBody: true,
       body: widget.child,
-      bottomNavigationBar: CustomBottomNavBar(
+      bottomNavigationBar: CurvedBottomNavBar(
         currentIndex: _currentIndex,
         onTap: (index) => _onItemTapped(index, context),
-      ),
-    );
-  }
-}
-
-class CustomBottomNavBar extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTap;
-
-  const CustomBottomNavBar({
-    super.key,
-    required this.currentIndex,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
-    final double height = 80;
-
-    return SizedBox(
-      height: height + 20, // Extra space for the floating item
-      child: Stack(
-        children: [
-          Positioned(
-            bottom: 0,
-            left: 0,
-            child: SizedBox(
-              width: size.width,
-              height: height,
-              child: CustomPaint(
-                painter: _BottomNavCurvePainter(currentIndex: currentIndex),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: SizedBox(
-              height: height + 20,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  _NavBarItem(
-                    icon: PhosphorIcons.house(),
-                    label: 'Beranda',
-                    isSelected: currentIndex == 0,
-                    onTap: () => onTap(0),
-                  ),
-                  _NavBarItem(
-                    icon: PhosphorIcons.calendarBlank(),
-                    label: 'Jadwal',
-                    isSelected: currentIndex == 1,
-                    onTap: () => onTap(1),
-                  ),
-                  _NavBarItem(
-                    icon: PhosphorIcons.user(),
-                    label: 'Profil',
-                    isSelected: currentIndex == 2,
-                    onTap: () => onTap(2),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        items: [
+          NavBarItemData(icon: PhosphorIcons.house(), label: 'Beranda'),
+          NavBarItemData(icon: PhosphorIcons.calendarBlank(), label: 'Jadwal'),
+          NavBarItemData(icon: PhosphorIcons.user(), label: 'Profil'),
         ],
       ),
     );
   }
 }
 
-class _NavBarItem extends StatelessWidget {
+class NavBarItemData {
   final IconData icon;
   final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
+  NavBarItemData({required this.icon, required this.label});
+}
 
-  const _NavBarItem({
-    required this.icon,
-    required this.label,
-    required this.isSelected,
+class CurvedBottomNavBar extends StatefulWidget {
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+  final List<NavBarItemData> items;
+
+  const CurvedBottomNavBar({
+    super.key,
+    required this.currentIndex,
     required this.onTap,
+    required this.items,
   });
 
   @override
+  State<CurvedBottomNavBar> createState() => _CurvedBottomNavBarState();
+}
+
+class _CurvedBottomNavBarState extends State<CurvedBottomNavBar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+  int _oldIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _oldIndex = widget.currentIndex;
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _animation = Tween<double>(
+      begin: _oldIndex.toDouble(),
+      end: widget.currentIndex.toDouble(),
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutBack,
+    ));
+  }
+
+  @override
+  void didUpdateWidget(covariant CurvedBottomNavBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.currentIndex != oldWidget.currentIndex) {
+      _oldIndex = oldWidget.currentIndex;
+      _animation = Tween<double>(
+        begin: _oldIndex.toDouble(),
+        end: widget.currentIndex.toDouble(),
+      ).animate(CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOutBack,
+      ));
+      _animationController.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 80,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            if (isSelected)
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryBlue,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+    final size = MediaQuery.of(context).size;
+    const double horizontalPadding =
+        32.0; // Margin from edges to push items to center
+    final availableWidth = size.width - (horizontalPadding * 2);
+    final itemWidth = availableWidth / widget.items.length;
+    const double navBarHeight = 80.0;
+    const double domeHeight = 35.0; // Height of the bump
+
+    return SizedBox(
+      height: navBarHeight + domeHeight,
+      child: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          final currentAnimValue = _animation.value;
+          final activeCenterX = horizontalPadding +
+              (currentAnimValue * itemWidth) +
+              (itemWidth / 2);
+
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // 1. White Background with Dome
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: navBarHeight + domeHeight,
+                child: CustomPaint(
+                  painter: _DomePainter(
+                    activeCenterX: activeCenterX,
+                    navBarHeight: navBarHeight,
+                    domeHeight: domeHeight,
+                  ),
                 ),
-                child: Icon(icon, color: Colors.white, size: 28),
-              )
-            else
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8.0, top: 28.0),
-                child: Icon(icon, color: AppTheme.textGrey, size: 28),
               ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? AppTheme.primaryBlue : AppTheme.textGrey,
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+
+              // 2. Navigation Items
+              Positioned(
+                bottom: 0,
+                left: horizontalPadding,
+                right: horizontalPadding,
+                height: navBarHeight + domeHeight,
+                child: Row(
+                  children: List.generate(widget.items.length, (index) {
+                    final item = widget.items[index];
+                    final distance = (currentAnimValue - index).abs();
+                    final progress = (1.0 - distance).clamp(0.0, 1.0);
+
+                    return GestureDetector(
+                      onTap: () => widget.onTap(index),
+                      behavior: HitTestBehavior.opaque,
+                      child: SizedBox(
+                        width: itemWidth,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          clipBehavior: Clip.none,
+                          children: [
+                            // Text
+                            Positioned(
+                              bottom: 20,
+                              child: Text(
+                                item.label,
+                                style: TextStyle(
+                                  color: Color.lerp(
+                                    AppTheme.textGrey,
+                                    AppTheme.primaryBlue,
+                                    progress,
+                                  ),
+                                  fontSize: 12,
+                                  fontWeight: progress > 0.5
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                              ),
+                            ),
+                            // Circle Icon
+                            Positioned(
+                              bottom: 26 +
+                                  (progress *
+                                      27), // Ends at 53 (concentric), starts at 26 (closer to text)
+                              child: Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  color: progress > 0.5
+                                      ? AppTheme.primaryBlue
+                                      : Colors.transparent,
+                                  shape: BoxShape.circle,
+                                  boxShadow: progress > 0.5
+                                      ? [
+                                          BoxShadow(
+                                            color: AppTheme.primaryBlue
+                                                .withValues(
+                                                    alpha: 0.3 * progress),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 4),
+                                          )
+                                        ]
+                                      : [],
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    item.icon,
+                                    color: Color.lerp(
+                                      AppTheme.textGrey,
+                                      Colors.white,
+                                      progress,
+                                    ),
+                                    size: 28,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-          ],
-        ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-class _BottomNavCurvePainter extends CustomPainter {
-  final int currentIndex;
+class _DomePainter extends CustomPainter {
+  final double activeCenterX;
+  final double navBarHeight;
+  final double domeHeight;
 
-  _BottomNavCurvePainter({required this.currentIndex});
+  _DomePainter({
+    required this.activeCenterX,
+    required this.navBarHeight,
+    required this.domeHeight,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -198,49 +280,55 @@ class _BottomNavCurvePainter extends CustomPainter {
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
     final path = Path();
-    final double width = size.width;
-    final double height = size.height;
-    
-    // Width of each segment
-    final double segmentWidth = width / 3;
-    // Center x of the active item
-    final double activeCenterX = (segmentWidth * currentIndex) + (segmentWidth / 2);
-    
-    final double curveWidth = 80;
-    final double curveHeight = 30;
 
-    path.moveTo(0, 0);
+    // Coordinates setup
+    final double yFlat = domeHeight; // Baseline of the navbar (35.0)
+    final double cx = activeCenterX;
 
-    // Draw straight line to the start of the curve
-    if (activeCenterX - curveWidth / 2 > 0) {
-      path.lineTo(activeCenterX - curveWidth / 2, 0);
+    final double fxOffset = 50.54;
+    final double txOffset = 31.83; // Tangent X offset from center
+    final double ty = 22.03; // Tangent Y coordinate
+
+    path.moveTo(0, yFlat);
+
+    if (cx - fxOffset > 0) {
+      path.lineTo(cx - fxOffset, yFlat);
     }
 
-    // Draw the upward curve (bump)
-    path.cubicTo(
-      activeCenterX - curveWidth / 4, 0,
-      activeCenterX - curveWidth / 4, -curveHeight,
-      activeCenterX, -curveHeight,
-    );
-    
-    path.cubicTo(
-      activeCenterX + curveWidth / 4, -curveHeight,
-      activeCenterX + curveWidth / 4, 0,
-      activeCenterX + curveWidth / 2, 0,
+    // Left fillet
+    path.arcToPoint(
+      Offset(cx - txOffset, ty),
+      radius: const Radius.circular(20),
+      clockwise: false, // Bends upwards
     );
 
-    // Draw straight line to the end
-    path.lineTo(width, 0);
-    path.lineTo(width, height);
-    path.lineTo(0, height);
+    // Center dome (perfect semicircle)
+    path.arcToPoint(
+      Offset(cx + txOffset, ty),
+      radius: const Radius.circular(34),
+      clockwise: true, // Wraps around the circle
+    );
+
+    // Right fillet
+    path.arcToPoint(
+      Offset(cx + fxOffset, yFlat),
+      radius: const Radius.circular(20),
+      clockwise: false, // Bends downwards to flat
+    );
+
+    path.lineTo(size.width, yFlat);
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
     path.close();
 
+    // Draw shadow first
     canvas.drawPath(path, shadowPaint);
+    // Draw the white navbar
     canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(covariant _BottomNavCurvePainter oldDelegate) {
-    return oldDelegate.currentIndex != currentIndex;
+  bool shouldRepaint(covariant _DomePainter oldDelegate) {
+    return oldDelegate.activeCenterX != activeCenterX;
   }
 }

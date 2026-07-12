@@ -5,6 +5,7 @@ class AppTheme {
   // Brand Colors
   static const Color primaryBlue = Color(0xFF5568F5);
   static const Color accentAmber = Color(0xFFFFB01D);
+  static const Color weatherBlue = Color(0xFF4F68D9);
   
   // Background Colors
   static const Color backgroundApp = Color(0xFFF4F6FC);

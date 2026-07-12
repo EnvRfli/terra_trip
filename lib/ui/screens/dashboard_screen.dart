@@ -1,19 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../providers/trip_provider.dart';
 import '../../theme/app_theme.dart';
-import '../../models/activity_model.dart';
-import '../widgets/activity_card.dart';
+
 import 'dashboard/widgets/dashboard_header.dart';
 import 'dashboard/widgets/dashboard_date_selector.dart';
 import 'dashboard/widgets/dashboard_section_header.dart';
 import 'dashboard/widgets/dashboard_weather_card.dart';
-import 'dashboard/widgets/dashboard_ongoing_activity.dart';
+import 'dashboard/widgets/dashboard_schedule_section.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  late DateTime selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    selectedDate = DateTime(now.year, now.month, now.day);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +78,14 @@ class DashboardScreen extends StatelessWidget {
                   ),
 
                   // Horizontal Date Selector
-                  const DashboardDateSelector(),
+                  DashboardDateSelector(
+                    selectedDate: selectedDate,
+                    onDateChanged: (date) {
+                      setState(() {
+                        selectedDate = date;
+                      });
+                    },
+                  ),
 
                   const SizedBox(height: 24),
 
@@ -92,64 +110,22 @@ class DashboardScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Schedule Header
+                              const SizedBox(height: 12),
                               DashboardSectionHeader(
                                 title: 'Jadwal Hari Ini',
                                 onActionTap: () {},
                               ),
                               const SizedBox(height: 16),
-
-                              // Active Activity
-                              Consumer<TripProvider>(
-                                builder: (context, provider, child) {
-                                  final activities =
-                                      provider.getActivitiesForDate(DateTime(
-                                          2026,
-                                          10,
-                                          16)); // Using dummy base date
-                                  if (activities.isEmpty) {
-                                    return const SizedBox.shrink();
-                                  }
-
-                                  final ongoing = activities
-                                      .where((a) =>
-                                          a.status == ActivityStatus.ongoing)
-                                      .toList();
-                                  final others = activities
-                                      .where((a) =>
-                                          a.status != ActivityStatus.ongoing)
-                                      .toList();
-
-                                  return Column(
-                                    children: [
-                                      if (ongoing.isNotEmpty) ...[
-                                        DashboardOngoingActivity(
-                                            activity: ongoing.first),
-                                        const SizedBox(height: 16),
-                                      ],
-                                      // Show next upcoming activity as standard card
-                                      if (others.isNotEmpty)
-                                        ActivityCard(
-                                            activity: others.first,
-                                            showStatusBanner: false),
-                                    ],
-                                  );
-                                },
+                              DashboardScheduleSection(
+                                selectedDate: selectedDate,
                               ),
-
-                              const SizedBox(height: 24),
-
-                              // Weather Section
+                              const SizedBox(height: 42),
                               DashboardSectionHeader(
                                 title: 'Cuaca',
                                 onActionTap: () {},
                               ),
                               const SizedBox(height: 16),
-
-                              // Weather Card
                               const DashboardWeatherCard(),
-
-                              // Extra bottom padding for floating nav bar
                               const SizedBox(height: 100),
                             ],
                           ),

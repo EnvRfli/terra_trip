@@ -6,7 +6,7 @@ class DashboardHeader extends StatelessWidget {
 
   const DashboardHeader({
     super.key,
-    this.greeting = 'Selamat Datang, 👋',
+    this.greeting = 'Selamat Datang, 👋🏻',
     this.userName = 'Trio Dwi Pratama',
   });
 

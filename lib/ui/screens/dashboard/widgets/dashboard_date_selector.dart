@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 
 class DashboardDateSelector extends StatefulWidget {
-  const DashboardDateSelector({super.key});
+  final DateTime selectedDate;
+  final ValueChanged<DateTime> onDateChanged;
+
+  const DashboardDateSelector({
+    super.key,
+    required this.selectedDate,
+    required this.onDateChanged,
+  });
 
   @override
   State<DashboardDateSelector> createState() => _DashboardDateSelectorState();
 }
 
 class _DashboardDateSelectorState extends State<DashboardDateSelector> {
-  late DateTime selectedDate;
   late List<DateTime> dates;
   late ScrollController _scrollController;
 
@@ -19,11 +25,11 @@ class _DashboardDateSelectorState extends State<DashboardDateSelector> {
   void initState() {
     super.initState();
     final now = DateTime.now();
-    selectedDate = DateTime(now.year, now.month, now.day);
+    final baseDate = DateTime(now.year, now.month, now.day);
 
     // Generate dates around today
     dates = List.generate(_totalDays,
-        (index) => selectedDate.add(Duration(days: index - _initialIndex)));
+        (index) => baseDate.add(Duration(days: index - _initialIndex)));
 
     _scrollController = ScrollController();
 
@@ -86,27 +92,28 @@ class _DashboardDateSelectorState extends State<DashboardDateSelector> {
         itemCount: dates.length,
         itemBuilder: (context, index) {
           final date = dates[index];
-          final isSelected = date == selectedDate;
+          final isSelected = date.year == widget.selectedDate.year &&
+              date.month == widget.selectedDate.month &&
+              date.day == widget.selectedDate.day;
+
           final daysShort = ['SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB', 'MIN'];
           final dayName = daysShort[date.weekday - 1];
           final dateStr = date.day.toString();
 
           return GestureDetector(
             onTap: () {
-              setState(() {
-                selectedDate = date;
-              });
+              widget.onDateChanged(date);
               _scrollToIndex(index);
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              curve: Curves.bounceInOut, // Playful bouncy curve
+              curve: Curves.bounceInOut,
               width: itemWidth - 8,
               margin: EdgeInsets.only(
                 left: 4,
                 right: 4,
-                top: isSelected ? 4 : 16,
-                bottom: isSelected ? 20 : 8,
+                top: isSelected ? 8 : 12,
+                bottom: isSelected ? 12 : 8,
               ),
               decoration: BoxDecoration(
                 color: isSelected
