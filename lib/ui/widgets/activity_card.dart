@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../models/activity_model.dart';
 import '../../theme/app_theme.dart';
@@ -40,9 +41,13 @@ class ActivityCard extends StatelessWidget {
 
     final hasBanner = showStatusBanner && bannerText.isNotEmpty;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
+    return GestureDetector(
+      onTap: () {
+        context.push('/detail-activity/${activity.id}');
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
         color: AppTheme.backgroundCard,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
@@ -156,6 +161,7 @@ class ActivityCard extends StatelessWidget {
             ),
         ],
       ),
+    ),
     );
   }
 }

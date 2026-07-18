@@ -44,24 +44,24 @@ class AppTheme {
         surfaceContainerLow: backgroundCard,
       ),
       scaffoldBackgroundColor: backgroundApp,
-      textTheme: GoogleFonts.poppinsTextTheme().copyWith(
-        headlineSmall: GoogleFonts.poppins(
+      textTheme: GoogleFonts.interTextTheme().copyWith(
+        headlineSmall: GoogleFonts.inter(
           fontWeight: FontWeight.bold,
           color: textDark,
         ),
-        titleLarge: GoogleFonts.poppins(
+        titleLarge: GoogleFonts.inter(
           fontWeight: FontWeight.bold,
           color: textDark,
         ),
-        titleMedium: GoogleFonts.poppins(
+        titleMedium: GoogleFonts.inter(
           fontWeight: FontWeight.w600,
           color: textDark,
         ),
-        bodyLarge: GoogleFonts.poppins(
+        bodyLarge: GoogleFonts.inter(
           fontWeight: FontWeight.w500,
           color: textDark,
         ),
-        bodyMedium: GoogleFonts.poppins(
+        bodyMedium: GoogleFonts.inter(
           fontWeight: FontWeight.normal,
           color: textGrey,
         ),
@@ -70,7 +70,7 @@ class AppTheme {
         backgroundColor: backgroundApp,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.poppins(
+        titleTextStyle: GoogleFonts.inter(
           fontSize: 18,
           fontWeight: FontWeight.bold,
           color: textDark,

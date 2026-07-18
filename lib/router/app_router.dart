@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../ui/screens/dashboard_screen.dart';
 import '../ui/screens/profile_screen.dart';
-import '../ui/screens/schedule_screen.dart';
+import '../ui/screens/schedule/schedule_screen.dart';
+import '../ui/screens/add_schedule/add_schedule_screen.dart';
+import '../ui/screens/detail_activity/detail_activity_screen.dart';
 import '../ui/shell/app_shell.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -32,6 +34,19 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => const ProfileScreen(),
         ),
       ],
+    ),
+    GoRoute(
+      path: '/add-schedule',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const AddScheduleScreen(),
+    ),
+    GoRoute(
+      path: '/detail-activity/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final id = state.pathParameters['id'] ?? '';
+        return DetailActivityScreen(activityId: id);
+      },
     ),
   ],
 );
