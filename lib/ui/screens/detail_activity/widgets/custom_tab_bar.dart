@@ -35,31 +35,48 @@ class _CustomTabBarState extends State<CustomTabBar> {
 
   @override
   Widget build(BuildContext context) {
-    final int currentIndex = widget.tabController.index;
+    return AnimatedBuilder(
+      animation: widget.tabController.animation!,
+      builder: (context, child) {
+        final double animationValue = widget.tabController.animation!.value;
+        final int currentIndex = animationValue.round();
 
-    return Container(
-      color: const Color(0xFFFF5EC2).withValues(alpha: 0.0), // Transparent to show header gradient
-      child: Row(
-        children: [
-          _buildTab(
-            index: 0,
-            title: 'Jadwal',
-            isSelected: currentIndex == 0,
-            onTap: () => widget.tabController.animateTo(0),
+        return Container(
+          height: 60,
+          color: Colors
+              .transparent, // Background is transparent to show header gradient
+          child: Stack(
+            children: [
+              // 1. The custom painted white background
+              Positioned.fill(
+                child: CustomPaint(
+                  painter:
+                      _TabBackgroundPainter(animationValue: animationValue),
+                ),
+              ),
+              // 2. The tab texts
+              Row(
+                children: [
+                  _buildTab(
+                    title: 'Jadwal',
+                    isSelected: currentIndex == 0,
+                    onTap: () => widget.tabController.animateTo(0),
+                  ),
+                  _buildTab(
+                    title: 'Deskripsi',
+                    isSelected: currentIndex == 1,
+                    onTap: () => widget.tabController.animateTo(1),
+                  ),
+                ],
+              ),
+            ],
           ),
-          _buildTab(
-            index: 1,
-            title: 'Deskripsi',
-            isSelected: currentIndex == 1,
-            onTap: () => widget.tabController.animateTo(1),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildTab({
-    required int index,
     required String title,
     required bool isSelected,
     required VoidCallback onTap,
@@ -67,15 +84,9 @@ class _CustomTabBarState extends State<CustomTabBar> {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
+        behavior: HitTestBehavior.opaque,
         child: Container(
           height: 60,
-          decoration: BoxDecoration(
-            color: isSelected ? AppTheme.backgroundApp : Colors.transparent,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(24),
-              topRight: Radius.circular(24),
-            ),
-          ),
           alignment: Alignment.center,
           child: Text(
             title,
@@ -88,5 +99,73 @@ class _CustomTabBarState extends State<CustomTabBar> {
         ),
       ),
     );
+  }
+}
+
+class _TabBackgroundPainter extends CustomPainter {
+  final double animationValue;
+
+  _TabBackgroundPainter({required this.animationValue});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppTheme.backgroundApp
+      ..style = PaintingStyle.fill;
+
+    final double w = size.width;
+    final double h = size.height;
+    final double tabWidth = w / 2;
+
+    final double t = animationValue; // 0.0 to 1.0
+    final double startX = t * tabWidth;
+    final double endX = startX + tabWidth;
+
+    // The maximum horizontal distance the curve takes
+    const double maxCurveWidth = 24.0;
+
+    // Scale the curve width based on animation value so it flattens at the edges
+    final double cwLeft = t * maxCurveWidth;
+    final double cwRight = (1 - t) * maxCurveWidth;
+
+    final Path path = Path();
+    path.moveTo(0, h);
+
+    // Bottom left to start of left curve
+    path.lineTo(startX - cwLeft, h);
+
+    // Left S-Curve
+    path.cubicTo(
+      startX,
+      h,
+      startX,
+      0,
+      startX + cwLeft,
+      0,
+    );
+
+    // Top edge to start of right curve
+    path.lineTo(endX - cwRight, 0);
+
+    // Right S-Curve
+    path.cubicTo(
+      endX,
+      0,
+      endX,
+      h,
+      endX + cwRight,
+      h,
+    );
+
+    // Bottom right to end
+    path.lineTo(w, h);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _TabBackgroundPainter oldDelegate) {
+    return oldDelegate.animationValue != animationValue;
   }
 }
