@@ -112,30 +112,29 @@ class TimelineList extends StatelessWidget {
               alignment: Alignment.center,
               children: [
                 // The vertical line
-                Positioned(
-                  top: isFirst ? 30 : 0,
-                  bottom: isLast ? null : 0,
-                  height: isLast ? 30 : null,
-                  child: isSolidLine
-                      ? Container(
-                          width: 2,
-                          color: Colors.grey.shade300,
-                        )
-                      : CustomPaint(
-                          size: const Size(2, double.infinity),
-                          painter: _DashedLinePainter(color: dotColor),
-                        ),
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _TimelinePainter(
+                      color: isSolidLine ? Colors.grey.shade300 : dotColor,
+                      isSolidLine: isSolidLine,
+                      isFirst: isFirst,
+                      isLast: isLast,
+                    ),
+                  ),
                 ),
                 // The dot
                 Positioned(
-                  top: 24, // Align roughly with the top of the card content
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: dotColor, width: 3),
+                  top: 0,
+                  bottom: 16.0,
+                  child: Center(
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: dotColor, width: 3),
+                      ),
                     ),
                   ),
                 ),
@@ -156,24 +155,59 @@ class TimelineList extends StatelessWidget {
   }
 }
 
-class _DashedLinePainter extends CustomPainter {
+class _TimelinePainter extends CustomPainter {
   final Color color;
+  final bool isSolidLine;
+  final bool isFirst;
+  final bool isLast;
 
-  _DashedLinePainter({required this.color});
+  _TimelinePainter({
+    required this.color,
+    required this.isSolidLine,
+    required this.isFirst,
+    required this.isLast,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    double dashHeight = 5, dashSpace = 5, startY = 0;
     final paint = Paint()
       ..color = color
       ..strokeWidth = 2;
-    while (startY < size.height) {
-      canvas.drawLine(Offset(size.width / 2, startY),
-          Offset(size.width / 2, startY + dashHeight), paint);
-      startY += dashHeight + dashSpace;
+
+    final double totalHeight = size.height;
+    final double cardHeight = totalHeight - 16.0; // Subtract padding
+    final double centerY = cardHeight / 2;
+
+    final double startY = isFirst ? centerY : 0;
+    final double endY = isLast ? centerY : totalHeight;
+
+    if (isSolidLine) {
+      canvas.drawLine(
+        Offset(size.width / 2, startY),
+        Offset(size.width / 2, endY),
+        paint,
+      );
+    } else {
+      double dashHeight = 5, dashSpace = 5;
+      double currentY = startY;
+      while (currentY < endY) {
+        double nextY = currentY + dashHeight;
+        if (nextY > endY) nextY = endY;
+        canvas.drawLine(
+          Offset(size.width / 2, currentY),
+          Offset(size.width / 2, nextY),
+          paint,
+        );
+        currentY += dashHeight + dashSpace;
+      }
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _TimelinePainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.isSolidLine != isSolidLine ||
+        oldDelegate.isFirst != isFirst ||
+        oldDelegate.isLast != isLast;
+  }
 }

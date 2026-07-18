@@ -6,11 +6,11 @@ class AppTheme {
   static const Color primaryBlue = Color(0xFF5568F5);
   static const Color accentAmber = Color(0xFFFFB01D);
   static const Color weatherBlue = Color(0xFF4F68D9);
-  
+
   // Background Colors
   static const Color backgroundApp = Color(0xFFF4F6FC);
   static const Color backgroundCard = Color(0xFFFFFFFF);
-  
+
   // Status & Badge Colors
   static const Color badgeLiburan = Color(0xFF00C9E0);
   static const Color badgeKencan = Color(0xFFFF65C3);
